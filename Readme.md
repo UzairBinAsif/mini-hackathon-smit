@@ -1,0 +1,1 @@
+## A Mini Hackathon Project for SMIT.
