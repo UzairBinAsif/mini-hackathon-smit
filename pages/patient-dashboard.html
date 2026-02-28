@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Dashboard - Clinic Management</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../styles/medical.css">
+    <style>
+        .timeline {
+            position: relative;
+            padding-left: 2rem;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 8px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--border-color);
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 1.5rem;
+            padding: 1rem 1.2rem;
+            background: var(--bg-color);
+            border-radius: 0.75rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -1.65rem;
+            top: 1.2rem;
+            width: 10px;
+            height: 10px;
+            background: var(--primary-color);
+            border-radius: 50%;
+            border: 2px solid var(--card-bg);
+        }
+
+        .timeline-date {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 0.3rem;
+        }
+
+        .timeline-title {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: var(--text-main);
+        }
+
+        .timeline-detail {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-top: 0.3rem;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loading">
+        <div class="spinner"></div>
+        <p class="loading-text">Loading your portal...</p>
+    </div>
+
+    <!-- Mobile Sidebar Toggle -->
+    <button class="sidebar-toggle" id="sidebar-toggle">
+        <i class="fa-solid fa-bars"></i>
+    </button>
+
+    <div class="dashboard-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h2><i class="fa-solid fa-staff-snake text-primary"></i> MyHealth</h2>
+            </div>
+            <ul class="sidebar-nav">
+                <li><a href="#" class="active"><i class="fa-solid fa-house-medical"></i> Overview</a></li>
+                <li><a href="#"><i class="fa-solid fa-notes-medical"></i> Medical History</a></li>
+                <li><a href="#"><i class="fa-solid fa-file-pdf"></i> Prescriptions</a></li>
+                <li><a href="#"><i class="fa-solid fa-calendar-check"></i> My Appointments</a></li>
+            </ul>
+            <div class="sidebar-footer">
+                <button class="btn btn-danger" id="logout-btn"><i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    Logout</button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="top-header">
+                <h1>Patient Portal</h1>
+                <div class="user-profile">
+                    <i class="fa-solid fa-user"></i>
+                    <span id="patient-name">Patient</span>
+                </div>
+            </header>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: var(--warning-light); color: var(--warning-color);"><i
+                            class="fa-solid fa-calendar-day"></i></div>
+                    <div class="stat-details">
+                        <h3 id="stat-appointments">--</h3>
+                        <p>My Appointments</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: var(--secondary-light); color: var(--secondary-color);"><i
+                            class="fa-solid fa-prescription"></i></div>
+                    <div class="stat-details">
+                        <h3 id="stat-prescriptions">--</h3>
+                        <p>Prescriptions</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Appointments -->
+            <div class="content-panel">
+                <h2><i class="fa-solid fa-calendar-check"></i> My Appointments</h2>
+                <div id="appointments-list" style="color: var(--text-muted);">Loading...</div>
+            </div>
+
+            <!-- Medical History Timeline -->
+            <div class="content-panel">
+                <h2><i class="fa-solid fa-clock-rotate-left"></i> Medical History Timeline</h2>
+                <div class="timeline" id="timeline">
+                    <p class="text-muted">Loading history...</p>
+                </div>
+            </div>
+
+            <!-- Prescriptions -->
+            <div class="content-panel">
+                <h2><i class="fa-solid fa-file-prescription"></i> My Prescriptions</h2>
+                <div id="prescriptions-list" style="color: var(--text-muted);">Loading...</div>
+            </div>
+        </main>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script type="module">
+        import { auth, db } from '../scripts/firebase-config.js';
+        import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
+        import { collection, getDocs, doc, getDoc, query, where } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+
+        const loading = document.getElementById('loading');
+        const sidebarToggle = document.getElementById('sidebar-toggle');
+        const sidebar = document.getElementById('sidebar');
+        let patientUID = '';
+        let patientData = null;
+
+        sidebarToggle.addEventListener('click', () => sidebar.classList.toggle('open'));
+
+        // Auth guard
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) { window.location.href = 'login.html'; return; }
+            const userDoc = await getDoc(doc(db, 'users', user.uid));
+            if (!userDoc.exists() || userDoc.data().role !== 'Patient') {
+                window.location.href = 'login.html'; return;
+            }
+            patientUID = user.uid;
+            patientData = userDoc.data();
+            document.getElementById('patient-name').textContent = patientData.name;
+
+            // Find this patient's ID in the patients collection
+            const pSnap = await getDocs(collection(db, 'patients'));
+            let patientDocId = null;
+            pSnap.forEach(d => {
+                // Match by name or email (since patients may be registered by receptionist)
+                if (d.data().name === patientData.name) {
+                    patientDocId = d.id;
+                }
+            });
+
+            if (patientDocId) {
+                await loadAppointments(patientDocId);
+                await loadPrescriptions(patientDocId);
+                buildTimeline(patientDocId);
+            } else {
+                // Patient might not have a record in 'patients' collection yet
+                document.getElementById('appointments-list').innerHTML = '<p class="text-muted">No appointments found. Your receptionist will register you.</p>';
+                document.getElementById('prescriptions-list').innerHTML = '<p class="text-muted">No prescriptions yet.</p>';
+                document.getElementById('timeline').innerHTML = '<p class="text-muted">No history yet.</p>';
+                document.getElementById('stat-appointments').textContent = '0';
+                document.getElementById('stat-prescriptions').textContent = '0';
+            }
+
+            loading.classList.add('hidden');
+        });
+
+        let allAppointments = [];
+        let allPrescriptions = [];
+
+        async function loadAppointments(patientId) {
+            const q = query(collection(db, 'appointments'), where('patientId', '==', patientId));
+            const snap = await getDocs(q);
+            const container = document.getElementById('appointments-list');
+            container.innerHTML = '';
+            allAppointments = [];
+
+            if (snap.empty) {
+                container.innerHTML = '<p class="text-muted">No appointments found.</p>';
+                document.getElementById('stat-appointments').textContent = '0';
+                return;
+            }
+
+            snap.forEach(d => {
+                const a = d.data();
+                allAppointments.push(a);
+                const badgeClass = a.status === 'completed' ? 'badge-completed' : a.status === 'confirmed' ? 'badge-confirmed' : a.status === 'cancelled' ? 'badge-cancelled' : 'badge-pending';
+                const div = document.createElement('div');
+                div.style.cssText = 'display:flex; justify-content:space-between; align-items:center; padding:0.8rem; background:var(--bg-color); border-radius:0.5rem; margin-bottom:0.5rem; border: 1px solid var(--border-color);';
+                div.innerHTML = `
+                    <div>
+                        <strong><i class="fa-solid fa-user-doctor"></i> ${a.doctorName || 'Doctor'}</strong>
+                        <p style="font-size:0.85rem; color:var(--text-muted);"><i class="fa-regular fa-calendar"></i> ${a.date}</p>
+                    </div>
+                    <span class="badge ${badgeClass}">${a.status}</span>
+                `;
+                container.appendChild(div);
+            });
+            document.getElementById('stat-appointments').textContent = snap.size;
+        }
+
+        async function loadPrescriptions(patientId) {
+            const q = query(collection(db, 'prescriptions'), where('patientId', '==', patientId));
+            const snap = await getDocs(q);
+            const container = document.getElementById('prescriptions-list');
+            container.innerHTML = '';
+            allPrescriptions = [];
+
+            if (snap.empty) {
+                container.innerHTML = '<p class="text-muted">No prescriptions yet.</p>';
+                document.getElementById('stat-prescriptions').textContent = '0';
+                return;
+            }
+
+            snap.forEach(d => {
+                const rx = d.data();
+                allPrescriptions.push(rx);
+                const date = rx.createdAt?.toDate ? rx.createdAt.toDate().toLocaleDateString() : '--';
+                const medsHtml = rx.medicines?.map(m => `<span style="display:block;font-size:0.85rem;color:var(--text-muted);"><i class="fa-solid fa-pills" style="color:var(--primary-color);"></i> ${m.name} — <em>${m.dosage}</em></span>`).join('') || '<span class="text-muted">--</span>';
+                const div = document.createElement('div');
+                div.style.cssText = 'display:flex; justify-content:space-between; align-items:flex-start; padding:1rem; background:var(--bg-color); border-radius:0.5rem; margin-bottom:0.5rem; border: 1px solid var(--border-color);';
+                div.innerHTML = `
+                    <div style="flex:1;">
+                        <strong><i class="fa-solid fa-user-doctor"></i> ${rx.doctorName || 'Doctor'}</strong>
+                        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:0.4rem;"><i class="fa-regular fa-calendar"></i> ${date}</p>
+                        ${medsHtml}
+                        ${rx.instructions ? '<p style="font-size:0.8rem; color:var(--text-muted); margin-top:0.4rem;"><i class="fa-solid fa-note-sticky"></i> ' + rx.instructions + '</p>' : ''}
+                    </div>
+                    <button class="btn btn-primary btn-sm download-pdf-btn" style="white-space:nowrap; margin-left:1rem;">
+                        <i class="fa-solid fa-download"></i> Download PDF
+                    </button>
+                `;
+                container.appendChild(div);
+
+                div.querySelector('.download-pdf-btn').addEventListener('click', () => generatePDF(rx));
+            });
+            document.getElementById('stat-prescriptions').textContent = snap.size;
+        }
+
+        function buildTimeline(patientId) {
+            const timeline = document.getElementById('timeline');
+            timeline.innerHTML = '';
+
+            // Merge appointments + prescriptions into a single timeline
+            const events = [];
+            allAppointments.forEach(a => {
+                events.push({ type: 'appointment', date: a.date, title: `Appointment with ${a.doctorName || 'Doctor'}`, detail: `Status: ${a.status}` });
+            });
+            allPrescriptions.forEach(rx => {
+                const date = rx.createdAt?.toDate ? rx.createdAt.toDate().toISOString().split('T')[0] : '--';
+                events.push({ type: 'prescription', date, title: `Prescription by ${rx.doctorName || 'Doctor'}`, detail: `Medicines: ${rx.medicines?.map(m => m.name).join(', ') || '--'}` });
+            });
+
+            events.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            if (events.length === 0) {
+                timeline.innerHTML = '<p class="text-muted">No history yet.</p>';
+                return;
+            }
+
+            events.forEach(ev => {
+                const item = document.createElement('div');
+                item.className = 'timeline-item';
+                item.innerHTML = `
+                    <div class="timeline-date"><i class="fa-regular fa-clock"></i> ${ev.date}</div>
+                    <div class="timeline-title"><i class="fa-solid ${ev.type === 'appointment' ? 'fa-calendar-check' : 'fa-prescription'}"></i> ${ev.title}</div>
+                    <div class="timeline-detail">${ev.detail}</div>
+                `;
+                timeline.appendChild(item);
+            });
+        }
+
+        function generatePDF(rx) {
+            try {
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF();
+                const date = rx.createdAt?.toDate ? rx.createdAt.toDate().toLocaleDateString() : new Date().toLocaleDateString();
+
+                // Header
+                pdf.setFontSize(22);
+                pdf.setTextColor(11, 92, 255);
+                pdf.text('AI Clinic Management', 105, 20, null, null, 'center');
+                pdf.setFontSize(14);
+                pdf.setTextColor(100, 116, 139);
+                pdf.text('Medical Prescription', 105, 28, null, null, 'center');
+                pdf.setDrawColor(226, 232, 240);
+                pdf.line(20, 33, 190, 33);
+
+                // Doctor & Patient info
+                pdf.setFontSize(11);
+                pdf.setTextColor(30, 41, 59);
+                pdf.text(`Doctor: ${rx.doctorName || '--'}`, 20, 44);
+                pdf.text(`Patient: ${patientData.name}`, 20, 52);
+                pdf.text(`Date: ${date}`, 150, 44);
+                pdf.line(20, 58, 190, 58);
+
+                // Rx Symbol
+                pdf.setFontSize(18);
+                pdf.setTextColor(11, 92, 255);
+                pdf.text('Rx', 20, 70);
+
+                // Medicines table header
+                pdf.setFontSize(10);
+                pdf.setTextColor(100, 116, 139);
+                pdf.text('#', 22, 80);
+                pdf.text('MEDICINE', 32, 80);
+                pdf.text('DOSAGE', 110, 80);
+                pdf.line(20, 83, 190, 83);
+
+                // Medicines rows
+                pdf.setFontSize(11);
+                pdf.setTextColor(30, 41, 59);
+                let y = 92;
+                if (rx.medicines && rx.medicines.length > 0) {
+                    rx.medicines.forEach((m, i) => {
+                        pdf.text(`${i + 1}.`, 22, y);
+                        pdf.text(m.name, 32, y);
+                        pdf.text(m.dosage, 110, y);
+                        y += 9;
+                        if (y > 260) { pdf.addPage(); y = 20; }
+                    });
+                }
+
+                // Notes
+                if (rx.instructions) {
+                    y += 8;
+                    pdf.setFontSize(11);
+                    pdf.setTextColor(11, 92, 255);
+                    pdf.text('Instructions / Notes:', 20, y);
+                    y += 7;
+                    pdf.setTextColor(30, 41, 59);
+                    pdf.setFontSize(10);
+                    const lines = pdf.splitTextToSize(rx.instructions, 170);
+                    pdf.text(lines, 20, y);
+                }
+
+                // Footer
+                pdf.setFontSize(9);
+                pdf.setTextColor(150, 150, 150);
+                pdf.text('This is an electronically generated prescription.', 105, 285, null, null, 'center');
+
+                pdf.save(`Prescription_${patientData.name.replace(/\s+/g, '_')}_${date.replace(/\//g, '-')}.pdf`);
+            } catch (err) {
+                console.error('PDF generation error:', err);
+                alert('Failed to generate PDF. Please try again.');
+            }
+        }
+
+        // Logout
+        document.getElementById('logout-btn').addEventListener('click', async () => {
+            await signOut(auth);
+            sessionStorage.clear();
+            window.location.href = 'login.html';
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Clinic Management</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../styles/medical.css">
+    <style>
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+            animation: fadeSlideUp 0.3s ease-out;
+        }
+
+        .toggle-btn {
+            cursor: pointer;
+            padding: 0.3rem 0.6rem;
+            border-radius: 0.3rem;
+            font-size: 0.8rem;
+            border: none;
+            font-weight: 600;
+        }
+
+        .toggle-active {
+            background: var(--secondary-light);
+            color: var(--secondary-color);
+        }
+
+        .toggle-disabled {
+            background: var(--danger-light);
+            color: var(--danger-color);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="loading-overlay" id="loading">
+        <div class="spinner"></div>
+        <p class="loading-text">Loading dashboard...</p>
+    </div>
+
+    <button class="sidebar-toggle" id="sidebar-toggle"><i class="fa-solid fa-bars"></i></button>
+
+    <div class="dashboard-layout">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h2><i class="fa-solid fa-staff-snake text-primary"></i> ClinicAdmin</h2>
+            </div>
+            <ul class="sidebar-nav" id="nav-links">
+                <li><a href="#" class="active" data-section="sec-overview"><i class="fa-solid fa-chart-pie"></i>
+                        Dashboard</a></li>
+                <li><a href="#" data-section="sec-users"><i class="fa-solid fa-users-gear"></i> Manage Users</a></li>
+                <li><a href="#" data-section="sec-patients"><i class="fa-solid fa-hospital-user"></i> All Patients</a>
+                </li>
+            </ul>
+            <div class="sidebar-footer">
+                <button class="btn btn-danger" id="logout-btn"><i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    Logout</button>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="top-header">
+                <h1 id="page-title">Admin Overview</h1>
+                <div class="user-profile">
+                    <i class="fa-solid fa-user-shield"></i>
+                    <span id="admin-name">System Admin</span>
+                </div>
+            </header>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fa-solid fa-users"></i></div>
+                    <div class="stat-details">
+                        <h3 id="stat-patients">--</h3>
+                        <p>Total Patients</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:var(--secondary-light);color:var(--secondary-color);"><i
+                            class="fa-solid fa-user-doctor"></i></div>
+                    <div class="stat-details">
+                        <h3 id="stat-doctors">--</h3>
+                        <p>Doctors</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:var(--warning-light);color:var(--warning-color);"><i
+                            class="fa-regular fa-calendar-check"></i></div>
+                    <div class="stat-details">
+                        <h3 id="stat-appointments">--</h3>
+                        <p>Total Appointments</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:var(--danger-light);color:var(--danger-color);"><i
+                            class="fa-solid fa-prescription"></i></div>
+                    <div class="stat-details">
+                        <h3 id="stat-prescriptions">--</h3>
+                        <p>Prescriptions</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============ SECTION: OVERVIEW ============ -->
+            <div class="section active" id="sec-overview">
+                <div class="data-table-wrapper">
+                    <h2><i class="fa-solid fa-list"></i> All System Users</h2>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="overview-users-body">
+                            <tr>
+                                <td colspan="4" class="text-center text-muted" style="padding:2rem;">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ============ SECTION: MANAGE USERS ============ -->
+            <div class="section" id="sec-users">
+                <!-- Create Doctor/Receptionist -->
+                <div class="content-panel" style="margin-bottom:1.5rem;">
+                    <h2><i class="fa-solid fa-user-plus"></i> Create Staff Account</h2>
+                    <form id="create-user-form">
+                        <div class="stats-grid" style="grid-template-columns: 1fr 1fr;">
+                            <div class="form-group"><label>Full Name *</label><input type="text" id="cu-name"
+                                    class="form-control" placeholder="Dr. Ali Khan" required></div>
+                            <div class="form-group"><label>Email *</label><input type="email" id="cu-email"
+                                    class="form-control" placeholder="ali@clinic.com" required></div>
+                            <div class="form-group"><label>Password *</label><input type="password" id="cu-password"
+                                    class="form-control" placeholder="Min 6 characters" required minlength="6"></div>
+                            <div class="form-group"><label>Role *</label>
+                                <select id="cu-role" class="form-control" required style="appearance:auto;">
+                                    <option value="" disabled selected>Select role...</option>
+                                    <option value="Doctor">Doctor</option>
+                                    <option value="Receptionist">Receptionist</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary" id="cu-submit-btn" style="width:auto;"><i
+                                class="fa-solid fa-user-plus"></i> Create Account</button>
+                    </form>
+                    <div id="cu-msg" class="mt-2" style="display:none;"></div>
+                </div>
+
+                <!-- Staff table with disable/enable -->
+                <div class="data-table-wrapper">
+                    <h2><i class="fa-solid fa-users-gear"></i> Staff Accounts</h2>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="staff-table-body">
+                            <tr>
+                                <td colspan="5" class="text-center text-muted" style="padding:2rem;">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ============ SECTION: ALL PATIENTS (Read-only) ============ -->
+            <div class="section" id="sec-patients">
+                <div class="data-table-wrapper">
+                    <h2><i class="fa-solid fa-hospital-user"></i> All Patients (Read-only)</h2>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Age</th>
+                                <th>Gender</th>
+                                <th>Contact</th>
+                                <th>Registered By</th>
+                            </tr>
+                        </thead>
+                        <tbody id="patients-table-body">
+                            <tr>
+                                <td colspan="5" class="text-center text-muted" style="padding:2rem;">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script type="module">
+        import { auth, db } from '../scripts/firebase-config.js';
+        import { onAuthStateChanged, signOut, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
+        import { getAuth } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
+        import { collection, getDocs, doc, getDoc, setDoc, updateDoc, Timestamp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+
+        const loading = document.getElementById('loading');
+        const sidebar = document.getElementById('sidebar');
+
+        document.getElementById('sidebar-toggle').addEventListener('click', () => sidebar.classList.toggle('open'));
+
+        // Section Navigation
+        document.getElementById('nav-links').addEventListener('click', (e) => {
+            const link = e.target.closest('a[data-section]');
+            if (!link) return;
+            e.preventDefault();
+            const sectionId = link.dataset.section;
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.getElementById(sectionId).classList.add('active');
+            document.querySelectorAll('#nav-links a').forEach(a => a.classList.remove('active'));
+            link.classList.add('active');
+            const titles = { 'sec-overview': 'Admin Overview', 'sec-users': 'Manage Users', 'sec-patients': 'All Patients' };
+            document.getElementById('page-title').textContent = titles[sectionId] || '';
+            sidebar.classList.remove('open');
+        });
+
+        // Auth guard — Admin only
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) { window.location.href = 'login.html'; return; }
+            const userDoc = await getDoc(doc(db, 'users', user.uid));
+            if (!userDoc.exists() || userDoc.data().role !== 'Admin') { window.location.href = 'login.html'; return; }
+            document.getElementById('admin-name').textContent = userDoc.data().name;
+            await loadAll();
+            loading.classList.add('hidden');
+        });
+
+        async function loadAll() {
+            await Promise.all([loadStats(), loadStaff(), loadPatients()]);
+        }
+
+        // ===================== STATS =====================
+        async function loadStats() {
+            try {
+                const [usersSnap, patientsSnap, apptSnap, rxSnap] = await Promise.all([
+                    getDocs(collection(db, 'users')),
+                    getDocs(collection(db, 'patients')),
+                    getDocs(collection(db, 'appointments')),
+                    getDocs(collection(db, 'prescriptions'))
+                ]);
+
+                let doctorCount = 0;
+                const overviewBody = document.getElementById('overview-users-body');
+                overviewBody.innerHTML = '';
+                usersSnap.forEach(d => {
+                    const u = d.data();
+                    if (!u.role) return; // Skip malformed/incomplete docs
+                    if (u.role === 'Doctor') doctorCount++;
+                    const statusLabel = u.disabled ? 'Disabled' : 'Active';
+                    const statusClass = u.disabled ? 'toggle-disabled' : 'toggle-active';
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${u.name || '--'}</td>
+                        <td>${u.email || '--'}</td>
+                        <td><span class="badge badge-confirmed">${u.role}</span></td>
+                        <td><span class="${statusClass}" style="padding:0.2rem 0.6rem;border-radius:0.3rem;font-size:0.8rem;">${statusLabel}</span></td>
+                    `;
+                    overviewBody.appendChild(row);
+                });
+
+                document.getElementById('stat-patients').textContent = patientsSnap.size;
+                document.getElementById('stat-doctors').textContent = doctorCount;
+                document.getElementById('stat-appointments').textContent = apptSnap.size;
+                document.getElementById('stat-prescriptions').textContent = rxSnap.size;
+            } catch (err) { console.error(err); }
+        }
+
+        // ===================== STAFF MANAGEMENT (Doctors & Receptionists) =====================
+        async function loadStaff() {
+            try {
+                const snap = await getDocs(collection(db, 'users'));
+                const tbody = document.getElementById('staff-table-body');
+                tbody.innerHTML = '';
+                let hasStaff = false;
+
+                snap.forEach(d => {
+                    const u = d.data();
+                    if (u.role === 'Doctor' || u.role === 'Receptionist') {
+                        hasStaff = true;
+                        const isDisabled = u.disabled === true;
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${u.name || '--'}</td>
+                            <td>${u.email || '--'}</td>
+                            <td><span class="badge badge-confirmed">${u.role}</span></td>
+                            <td><span class="${isDisabled ? 'toggle-disabled' : 'toggle-active'}" style="padding:0.2rem 0.6rem;border-radius:0.3rem;font-size:0.8rem;">${isDisabled ? 'Disabled' : 'Active'}</span></td>
+                            <td><button class="btn btn-sm ${isDisabled ? 'btn-primary' : 'btn-danger'} toggle-user-btn" data-uid="${d.id}" data-disabled="${isDisabled}">
+                                <i class="fa-solid ${isDisabled ? 'fa-check' : 'fa-ban'}"></i> ${isDisabled ? 'Enable' : 'Disable'}
+                            </button></td>
+                        `;
+                        tbody.appendChild(row);
+                    }
+                });
+
+                if (!hasStaff) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted" style="padding:2rem;">No staff accounts found.</td></tr>';
+                }
+
+                // Toggle handlers
+                document.querySelectorAll('.toggle-user-btn').forEach(btn => {
+                    btn.addEventListener('click', async () => {
+                        const uid = btn.dataset.uid;
+                        const isCurrentlyDisabled = btn.dataset.disabled === 'true';
+                        btn.disabled = true;
+                        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+                        try {
+                            await updateDoc(doc(db, 'users', uid), { disabled: !isCurrentlyDisabled });
+                            await Promise.all([loadStaff(), loadStats()]);
+                        } catch (err) { console.error(err); alert('Failed to update user.'); }
+                    });
+                });
+            } catch (err) { console.error(err); }
+        }
+
+        // ===================== CREATE STAFF (Doctor/Receptionist) =====================
+        // Use a secondary Firebase app to create the user without logging out the admin
+        const firebaseConfig = auth.app.options;
+        const secondaryApp = initializeApp(firebaseConfig, 'secondary');
+        const secondaryAuth = getAuth(secondaryApp);
+
+        document.getElementById('create-user-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('cu-submit-btn');
+            const msg = document.getElementById('cu-msg');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Creating...';
+            msg.style.display = 'none';
+
+            const name = document.getElementById('cu-name').value.trim();
+            const email = document.getElementById('cu-email').value.trim();
+            const password = document.getElementById('cu-password').value;
+            const role = document.getElementById('cu-role').value;
+
+            try {
+                // Create user with secondary auth (doesn't affect admin session)
+                const userCredential = await createUserWithEmailAndPassword(secondaryAuth, email, password);
+                const uid = userCredential.user.uid;
+
+                // Create Firestore user document
+                await setDoc(doc(db, 'users', uid), {
+                    id: uid,
+                    name,
+                    email,
+                    role,
+                    subscriptionPlan: 'Free',
+                    disabled: false,
+                    createdAt: Timestamp.now()
+                });
+
+                // Sign out from secondary auth
+                await signOut(secondaryAuth);
+
+                msg.innerHTML = `<span class="text-success"><i class="fa-solid fa-check-circle"></i> ${role} account created for ${name}!</span>`;
+                msg.style.display = 'block';
+                document.getElementById('create-user-form').reset();
+                await Promise.all([loadStaff(), loadStats()]);
+            } catch (err) {
+                console.error(err);
+                let errMsg = 'Failed to create account.';
+                if (err.code === 'auth/email-already-in-use') errMsg = 'This email is already registered.';
+                if (err.code === 'auth/weak-password') errMsg = 'Password must be at least 6 characters.';
+                msg.innerHTML = `<span class="text-danger"><i class="fa-solid fa-exclamation-circle"></i> ${errMsg}</span>`;
+                msg.style.display = 'block';
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-user-plus"></i> Create Account';
+            }
+        });
+
+        // ===================== PATIENTS (Read-only) =====================
+        async function loadPatients() {
+            try {
+                const snap = await getDocs(collection(db, 'patients'));
+                const tbody = document.getElementById('patients-table-body');
+                tbody.innerHTML = '';
+                if (snap.empty) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted" style="padding:2rem;">No patients registered.</td></tr>';
+                } else {
+                    snap.forEach(d => {
+                        const p = d.data();
+                        const row = document.createElement('tr');
+                        row.innerHTML = `<td>${p.name}</td><td>${p.age}</td><td>${p.gender}</td><td>${p.contact}</td><td style="font-size:0.85rem;color:var(--text-muted);">${p.createdBy || '--'}</td>`;
+                        tbody.appendChild(row);
+                    });
+                }
+            } catch (err) { console.error(err); }
+        }
+
+        // Logout
+        document.getElementById('logout-btn').addEventListener('click', async () => { await signOut(auth); sessionStorage.clear(); window.location.href = 'login.html'; });
+    </script>
+</body>
+
+</html>

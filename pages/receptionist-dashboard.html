@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Receptionist Dashboard - Clinic Management</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../styles/medical.css">
+    <style>
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+            animation: fadeSlideUp 0.3s ease-out;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="loading-overlay" id="loading">
+        <div class="spinner"></div>
+        <p class="loading-text">Loading dashboard...</p>
+    </div>
+
+    <button class="sidebar-toggle" id="sidebar-toggle"><i class="fa-solid fa-bars"></i></button>
+
+    <div class="dashboard-layout">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h2><i class="fa-solid fa-staff-snake text-primary"></i> ClinicFront</h2>
+            </div>
+            <ul class="sidebar-nav" id="nav-links">
+                <li><a href="#" class="active" data-section="sec-register"><i class="fa-solid fa-user-plus"></i>
+                        Register Patient</a></li>
+                <li><a href="#" data-section="sec-booking"><i class="fa-solid fa-calendar-plus"></i> Book
+                        Appointment</a></li>
+                <li><a href="#" data-section="sec-patients"><i class="fa-solid fa-users"></i> All Patients</a></li>
+                <li><a href="#" data-section="sec-appointments"><i class="fa-solid fa-calendar-days"></i>
+                        Appointments</a></li>
+                <li><a href="#" data-section="sec-schedule"><i class="fa-solid fa-clock"></i> Doctor Schedules</a></li>
+            </ul>
+            <div class="sidebar-footer">
+                <button class="btn btn-danger" id="logout-btn"><i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    Logout</button>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="top-header">
+                <h1 id="page-title">Register Patient</h1>
+                <div class="user-profile">
+                    <i class="fa-solid fa-headset"></i>
+                    <span id="receptionist-name">Receptionist</span>
+                </div>
+            </header>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fa-solid fa-hospital-user"></i></div>
+                    <div class="stat-details">
+                        <h3 id="stat-patients">--</h3>
+                        <p>Total Patients</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: var(--warning-light); color: var(--warning-color);"><i
+                            class="fa-solid fa-calendar-check"></i></div>
+                    <div class="stat-details">
+                        <h3 id="stat-appointments">--</h3>
+                        <p>Appointments Today</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: var(--secondary-light); color: var(--secondary-color);"><i
+                            class="fa-solid fa-user-doctor"></i></div>
+                    <div class="stat-details">
+                        <h3 id="stat-doctors">--</h3>
+                        <p>Active Doctors</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============ SECTION: REGISTER PATIENT ============ -->
+            <div class="section active" id="sec-register">
+                <div class="content-panel">
+                    <h2><i class="fa-solid fa-user-plus"></i> Register New Patient</h2>
+                    <form id="patient-form">
+                        <div class="stats-grid" style="grid-template-columns: 1fr 1fr;">
+                            <div class="form-group"><label>Full Name *</label><input type="text" id="p-name"
+                                    class="form-control" placeholder="Patient full name" required minlength="2"></div>
+                            <div class="form-group"><label>Age *</label><input type="number" id="p-age"
+                                    class="form-control" placeholder="e.g. 35" required min="0" max="150"></div>
+                            <div class="form-group"><label>Gender *</label>
+                                <select id="p-gender" class="form-control" required style="appearance:auto;">
+                                    <option value="" disabled selected>Select...</option>
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div class="form-group"><label>Contact Number *</label><input type="tel" id="p-contact"
+                                    class="form-control" placeholder="+92..." required></div>
+                        </div>
+                        <button type="submit" class="btn btn-primary" id="register-patient-btn" style="width:auto;"><i
+                                class="fa-solid fa-floppy-disk"></i> Register Patient</button>
+                    </form>
+                    <div id="patient-msg" class="mt-2" style="display:none;"></div>
+                </div>
+            </div>
+
+            <!-- ============ SECTION: BOOK APPOINTMENT ============ -->
+            <div class="section" id="sec-booking">
+                <div class="content-panel">
+                    <h2><i class="fa-solid fa-calendar-plus"></i> Book Appointment</h2>
+                    <form id="appointment-form">
+                        <div class="stats-grid" style="grid-template-columns: 1fr 1fr;">
+                            <div class="form-group"><label>Patient *</label>
+                                <select id="a-patient" class="form-control" required style="appearance:auto;">
+                                    <option value="" disabled selected>Select patient...</option>
+                                </select>
+                            </div>
+                            <div class="form-group"><label>Doctor *</label>
+                                <select id="a-doctor" class="form-control" required style="appearance:auto;">
+                                    <option value="" disabled selected>Select doctor...</option>
+                                </select>
+                            </div>
+                            <div class="form-group"><label>Date *</label><input type="date" id="a-date"
+                                    class="form-control" required></div>
+                            <div class="form-group"><label>Status</label>
+                                <select id="a-status" class="form-control" style="appearance:auto;">
+                                    <option value="pending" selected>Pending</option>
+                                    <option value="confirmed">Confirmed</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary" id="book-appt-btn" style="width:auto;"><i
+                                class="fa-solid fa-calendar-check"></i> Book Appointment</button>
+                    </form>
+                    <div id="appt-msg" class="mt-2" style="display:none;"></div>
+                </div>
+            </div>
+
+            <!-- ============ SECTION: ALL PATIENTS (with Edit) ============ -->
+            <div class="section" id="sec-patients">
+                <div class="data-table-wrapper">
+                    <h2><i class="fa-solid fa-list"></i> Registered Patients</h2>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Age</th>
+                                <th>Gender</th>
+                                <th>Contact</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="patients-table-body">
+                            <tr>
+                                <td colspan="5" class="text-center text-muted" style="padding:2rem;">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ============ SECTION: APPOINTMENTS (Cancel / Confirm) ============ -->
+            <div class="section" id="sec-appointments">
+                <div class="data-table-wrapper">
+                    <h2><i class="fa-solid fa-calendar-days"></i> All Appointments</h2>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Patient</th>
+                                <th>Doctor</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="appts-table-body">
+                            <tr>
+                                <td colspan="5" class="text-center text-muted" style="padding:2rem;">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ============ SECTION: DOCTOR SCHEDULES ============ -->
+            <div class="section" id="sec-schedule">
+                <div class="content-panel">
+                    <h2><i class="fa-solid fa-clock"></i> Today's Doctor Schedules</h2>
+                    <div id="schedule-container">
+                        <p class="text-muted">Loading schedules...</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- ============ MODAL: Edit Patient Contact ============ -->
+    <div class="modal-backdrop hidden" id="edit-modal">
+        <div class="modal-box">
+            <button class="modal-close" id="edit-modal-close">&times;</button>
+            <h2><i class="fa-solid fa-pen-to-square"></i> Edit Patient Contact</h2>
+            <form id="edit-form">
+                <input type="hidden" id="edit-id">
+                <div class="form-group"><label>Full Name</label><input type="text" id="edit-name" class="form-control"
+                        readonly style="opacity:0.6;"></div>
+                <div class="stats-grid" style="grid-template-columns:1fr 1fr;">
+                    <div class="form-group"><label>Age</label><input type="number" id="edit-age" class="form-control"
+                            required min="0" max="150"></div>
+                    <div class="form-group"><label>Gender</label>
+                        <select id="edit-gender" class="form-control" required style="appearance:auto;">
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group"><label>Contact Number *</label><input type="tel" id="edit-contact"
+                        class="form-control" required></div>
+                <button type="submit" class="btn btn-primary" id="edit-submit-btn"><i
+                        class="fa-solid fa-floppy-disk"></i> Update Patient</button>
+            </form>
+            <div id="edit-msg" class="mt-2" style="display:none;"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { auth, db } from '../scripts/firebase-config.js';
+        import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
+        import { collection, getDocs, addDoc, doc, getDoc, updateDoc, query, where, Timestamp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+
+        const loading = document.getElementById('loading');
+        const sidebar = document.getElementById('sidebar');
+        let currentUserId = '';
+
+        document.getElementById('sidebar-toggle').addEventListener('click', () => sidebar.classList.toggle('open'));
+
+        // Section Navigation
+        document.getElementById('nav-links').addEventListener('click', (e) => {
+            const link = e.target.closest('a[data-section]');
+            if (!link) return;
+            e.preventDefault();
+            const sectionId = link.dataset.section;
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.getElementById(sectionId).classList.add('active');
+            document.querySelectorAll('#nav-links a').forEach(a => a.classList.remove('active'));
+            link.classList.add('active');
+            const titles = { 'sec-register': 'Register Patient', 'sec-booking': 'Book Appointment', 'sec-patients': 'All Patients', 'sec-appointments': 'Appointments', 'sec-schedule': 'Doctor Schedules' };
+            document.getElementById('page-title').textContent = titles[sectionId] || '';
+            sidebar.classList.remove('open');
+            // Refresh data when switching tabs
+            if (sectionId === 'sec-appointments') loadAppointments();
+            if (sectionId === 'sec-schedule') loadSchedules();
+            if (sectionId === 'sec-patients') loadPatients();
+        });
+
+        // Auth guard — Receptionist only
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) { window.location.href = 'login.html'; return; }
+            const userDoc = await getDoc(doc(db, 'users', user.uid));
+            if (!userDoc.exists() || userDoc.data().role !== 'Receptionist') { window.location.href = 'login.html'; return; }
+            currentUserId = user.uid;
+            document.getElementById('receptionist-name').textContent = userDoc.data().name;
+            await Promise.all([loadPatients(), loadDoctors(), loadStats(), loadAppointments(), loadSchedules()]);
+            loading.classList.add('hidden');
+        });
+
+        // ===================== PATIENTS (with Edit contact) =====================
+        let allPatients = [];
+        async function loadPatients() {
+            const snap = await getDocs(collection(db, 'patients'));
+            const tbody = document.getElementById('patients-table-body');
+            const select = document.getElementById('a-patient');
+            tbody.innerHTML = '';
+            select.innerHTML = '<option value="" disabled selected>Select patient...</option>';
+            allPatients = [];
+
+            if (snap.empty) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted" style="padding:2rem;">No patients registered yet.</td></tr>';
+            } else {
+                snap.forEach(d => {
+                    const p = { id: d.id, ...d.data() };
+                    allPatients.push(p);
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${p.name}</td><td>${p.age}</td><td>${p.gender}</td><td>${p.contact}</td>
+                        <td><button class="btn btn-secondary btn-sm edit-btn" data-id="${p.id}"><i class="fa-solid fa-pen"></i> Edit</button></td>
+                    `;
+                    tbody.appendChild(row);
+                    const opt = document.createElement('option');
+                    opt.value = d.id; opt.textContent = p.name; opt.dataset.name = p.name;
+                    select.appendChild(opt);
+                });
+            }
+            document.getElementById('stat-patients').textContent = snap.size;
+
+            // Edit handlers
+            document.querySelectorAll('.edit-btn').forEach(btn => btn.addEventListener('click', () => openEditPatient(btn.dataset.id)));
+        }
+
+        // Edit Patient modal
+        function openEditPatient(id) {
+            const p = allPatients.find(x => x.id === id);
+            if (!p) return;
+            document.getElementById('edit-id').value = p.id;
+            document.getElementById('edit-name').value = p.name;
+            document.getElementById('edit-age').value = p.age;
+            document.getElementById('edit-gender').value = p.gender;
+            document.getElementById('edit-contact').value = p.contact;
+            document.getElementById('edit-msg').style.display = 'none';
+            document.getElementById('edit-modal').classList.remove('hidden');
+        }
+        document.getElementById('edit-modal-close').addEventListener('click', () => document.getElementById('edit-modal').classList.add('hidden'));
+
+        document.getElementById('edit-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('edit-submit-btn');
+            const msg = document.getElementById('edit-msg');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+            msg.style.display = 'none';
+            try {
+                await updateDoc(doc(db, 'patients', document.getElementById('edit-id').value), {
+                    age: parseInt(document.getElementById('edit-age').value),
+                    gender: document.getElementById('edit-gender').value,
+                    contact: document.getElementById('edit-contact').value.trim()
+                });
+                msg.innerHTML = '<span class="text-success"><i class="fa-solid fa-check-circle"></i> Updated!</span>';
+                msg.style.display = 'block';
+                await loadPatients();
+                setTimeout(() => document.getElementById('edit-modal').classList.add('hidden'), 1000);
+            } catch (err) {
+                console.error(err);
+                msg.innerHTML = '<span class="text-danger"><i class="fa-solid fa-exclamation-circle"></i> Failed.</span>';
+                msg.style.display = 'block';
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Update Patient';
+            }
+        });
+
+        // ===================== DOCTORS =====================
+        let allDoctors = [];
+        async function loadDoctors() {
+            const snap = await getDocs(collection(db, 'users'));
+            const select = document.getElementById('a-doctor');
+            select.innerHTML = '<option value="" disabled selected>Select doctor...</option>';
+            allDoctors = [];
+            snap.forEach(d => {
+                const u = d.data();
+                if (u.role === 'Doctor') {
+                    allDoctors.push({ id: d.id, ...u });
+                    const opt = document.createElement('option');
+                    opt.value = d.id; opt.textContent = u.name; opt.dataset.name = u.name;
+                    select.appendChild(opt);
+                }
+            });
+            document.getElementById('stat-doctors').textContent = allDoctors.length;
+        }
+
+        // ===================== STATS =====================
+        async function loadStats() {
+            const today = new Date().toISOString().split('T')[0];
+            const snap = await getDocs(collection(db, 'appointments'));
+            let todayCount = 0;
+            snap.forEach(d => { if (d.data().date === today) todayCount++; });
+            document.getElementById('stat-appointments').textContent = todayCount;
+        }
+
+        // ===================== REGISTER PATIENT =====================
+        document.getElementById('patient-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('register-patient-btn');
+            const msg = document.getElementById('patient-msg');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Registering...';
+            msg.style.display = 'none';
+            try {
+                await addDoc(collection(db, 'patients'), {
+                    name: document.getElementById('p-name').value.trim(),
+                    age: parseInt(document.getElementById('p-age').value),
+                    gender: document.getElementById('p-gender').value,
+                    contact: document.getElementById('p-contact').value.trim(),
+                    createdBy: currentUserId,
+                    createdAt: Timestamp.now()
+                });
+                msg.innerHTML = '<span class="text-success"><i class="fa-solid fa-check-circle"></i> Patient registered!</span>';
+                msg.style.display = 'block';
+                document.getElementById('patient-form').reset();
+                await loadPatients();
+            } catch (err) {
+                console.error(err);
+                msg.innerHTML = '<span class="text-danger"><i class="fa-solid fa-exclamation-circle"></i> Failed.</span>';
+                msg.style.display = 'block';
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Register Patient';
+            }
+        });
+
+        // ===================== BOOK APPOINTMENT =====================
+        document.getElementById('appointment-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('book-appt-btn');
+            const msg = document.getElementById('appt-msg');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Booking...';
+            msg.style.display = 'none';
+            const ps = document.getElementById('a-patient');
+            const ds = document.getElementById('a-doctor');
+            try {
+                await addDoc(collection(db, 'appointments'), {
+                    patientId: ps.value,
+                    patientName: ps.options[ps.selectedIndex].dataset.name,
+                    doctorId: ds.value,
+                    doctorName: ds.options[ds.selectedIndex].dataset.name,
+                    date: document.getElementById('a-date').value,
+                    status: document.getElementById('a-status').value,
+                    createdAt: Timestamp.now()
+                });
+                msg.innerHTML = '<span class="text-success"><i class="fa-solid fa-check-circle"></i> Appointment booked!</span>';
+                msg.style.display = 'block';
+                document.getElementById('appointment-form').reset();
+                await Promise.all([loadStats(), loadAppointments(), loadSchedules()]);
+            } catch (err) {
+                console.error(err);
+                msg.innerHTML = '<span class="text-danger"><i class="fa-solid fa-exclamation-circle"></i> Failed.</span>';
+                msg.style.display = 'block';
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-calendar-check"></i> Book Appointment';
+            }
+        });
+
+        // ===================== APPOINTMENTS LIST (Cancel / Confirm) =====================
+        async function loadAppointments() {
+            try {
+                const snap = await getDocs(collection(db, 'appointments'));
+                const tbody = document.getElementById('appts-table-body');
+                tbody.innerHTML = '';
+                if (snap.empty) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted" style="padding:2rem;">No appointments yet.</td></tr>';
+                    return;
+                }
+                const docs = [];
+                snap.forEach(d => docs.push({ id: d.id, ...d.data() }));
+                // Sort by date descending
+                docs.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+                docs.forEach(a => {
+                    const badgeClass = a.status === 'completed' ? 'badge-completed' : a.status === 'confirmed' ? 'badge-confirmed' : a.status === 'cancelled' ? 'badge-cancelled' : 'badge-pending';
+                    const row = document.createElement('tr');
+                    const isPending = a.status === 'pending';
+                    const isActive = a.status !== 'completed' && a.status !== 'cancelled';
+                    row.innerHTML = `
+                        <td>${a.date || '--'}</td>
+                        <td>${a.patientName || '--'}</td>
+                        <td>${a.doctorName || '--'}</td>
+                        <td><span class="badge ${badgeClass}">${a.status}</span></td>
+                        <td style="display:flex;gap:0.4rem;flex-wrap:wrap;">
+                            ${isPending ? `<button class="btn btn-primary btn-sm confirm-btn" data-aid="${a.id}"><i class="fa-solid fa-check"></i> Confirm</button>` : ''}
+                            ${isActive ? `<button class="btn btn-danger btn-sm cancel-btn" data-aid="${a.id}"><i class="fa-solid fa-xmark"></i> Cancel</button>` : '<span class="text-muted" style="font-size:0.85rem;">—</span>'}
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+
+                // Confirm handlers
+                document.querySelectorAll('.confirm-btn').forEach(btn => {
+                    btn.addEventListener('click', async () => {
+                        btn.disabled = true;
+                        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+                        await updateDoc(doc(db, 'appointments', btn.dataset.aid), { status: 'confirmed' });
+                        await loadAppointments();
+                    });
+                });
+
+                // Cancel handlers
+                document.querySelectorAll('.cancel-btn').forEach(btn => {
+                    btn.addEventListener('click', async () => {
+                        if (!confirm('Cancel this appointment?')) return;
+                        btn.disabled = true;
+                        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+                        await updateDoc(doc(db, 'appointments', btn.dataset.aid), { status: 'cancelled' });
+                        await loadAppointments();
+                    });
+                });
+            } catch (err) { console.error(err); }
+        }
+
+        // ===================== DOCTOR SCHEDULES (Today) =====================
+        async function loadSchedules() {
+            try {
+                const today = new Date().toISOString().split('T')[0];
+                const todayLabel = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                const snap = await getDocs(collection(db, 'appointments'));
+                const container = document.getElementById('schedule-container');
+
+                // Group by doctor
+                const doctorMap = {};
+                snap.forEach(d => {
+                    const a = d.data();
+                    if (a.date === today) {
+                        if (!doctorMap[a.doctorName || 'Unknown']) doctorMap[a.doctorName || 'Unknown'] = [];
+                        doctorMap[a.doctorName || 'Unknown'].push(a);
+                    }
+                });
+
+                if (Object.keys(doctorMap).length === 0) {
+                    container.innerHTML = `<p class="text-muted">No appointments scheduled for today (${todayLabel}).</p>`;
+                    return;
+                }
+
+                let html = `<p style="font-size:0.9rem;color:var(--text-muted);margin-bottom:1rem;"><i class="fa-regular fa-calendar"></i> ${todayLabel}</p>`;
+                for (const [doctorName, appts] of Object.entries(doctorMap)) {
+                    html += `<div style="background:var(--bg-color);border:1px solid var(--border-color);border-radius:0.75rem;padding:1rem;margin-bottom:1rem;">`;
+                    html += `<h3 style="font-size:1rem;margin-bottom:0.75rem;"><i class="fa-solid fa-user-doctor text-primary"></i> ${doctorName} <span class="badge badge-pending" style="font-size:0.75rem;">${appts.length} appts</span></h3>`;
+                    appts.forEach(a => {
+                        const badgeClass = a.status === 'completed' ? 'badge-completed' : a.status === 'confirmed' ? 'badge-confirmed' : a.status === 'cancelled' ? 'badge-cancelled' : 'badge-pending';
+                        html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:0.5rem 0;border-bottom:1px solid var(--border-color);">
+                            <span><i class="fa-solid fa-user"></i> ${a.patientName || '--'}</span>
+                            <span class="badge ${badgeClass}">${a.status}</span>
+                        </div>`;
+                    });
+                    html += `</div>`;
+                }
+                container.innerHTML = html;
+            } catch (err) { console.error(err); }
+        }
+
+        // Logout
+        document.getElementById('logout-btn').addEventListener('click', async () => { await signOut(auth); sessionStorage.clear(); window.location.href = 'login.html'; });
+    </script>
+</body>
+
+</html>

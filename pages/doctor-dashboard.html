@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doctor Dashboard - Clinic Management</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../styles/medical.css">
+    <style>
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+            animation: fadeSlideUp 0.3s ease-out;
+        }
+
+        .profile-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .profile-field label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+
+        .profile-field p {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-top: 0.2rem;
+        }
+
+        .timeline {
+            position: relative;
+            padding-left: 2rem;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 8px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--border-color);
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 1.5rem;
+            padding: 1rem 1.2rem;
+            background: var(--bg-color);
+            border-radius: 0.75rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -1.65rem;
+            top: 1.2rem;
+            width: 10px;
+            height: 10px;
+            background: var(--primary-color);
+            border-radius: 50%;
+            border: 2px solid var(--card-bg);
+        }
+
+        .timeline-date {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 0.3rem;
+        }
+
+        .timeline-title {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: var(--text-main);
+        }
+
+        .timeline-detail {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-top: 0.3rem;
+        }
+
+        @media(max-width:768px) {
+            .profile-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="loading-overlay" id="loading">
+        <div class="spinner"></div>
+        <p class="loading-text">Loading dashboard...</p>
+    </div>
+
+    <button class="sidebar-toggle" id="sidebar-toggle"><i class="fa-solid fa-bars"></i></button>
+
+    <div class="dashboard-layout">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h2><i class="fa-solid fa-staff-snake text-primary"></i> ClinicDoc</h2>
+            </div>
+            <ul class="sidebar-nav" id="nav-links">
+                <li><a href="#" class="active" data-section="sec-appointments"><i class="fa-solid fa-stethoscope"></i>
+                        My Appointments</a></li>
+                <li><a href="#" data-section="sec-patients"><i class="fa-solid fa-hospital-user"></i> Patient
+                        History</a></li>
+                <li><a href="#" data-section="sec-prescriptions"><i class="fa-solid fa-prescription-bottle-medical"></i>
+                        My Prescriptions</a></li>
+            </ul>
+            <div class="sidebar-footer">
+                <button class="btn btn-danger" id="logout-btn"><i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    Logout</button>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="top-header">
+                <h1 id="page-title">My Appointments</h1>
+                <div class="user-profile">
+                    <i class="fa-solid fa-user-doctor"></i>
+                    <span id="doctor-name">Dr. --</span>
+                </div>
+            </header>
+
+            <!-- Stats -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fa-regular fa-clock"></i></div>
+                    <div class="stat-details">
+                        <h3 id="stat-today">--</h3>
+                        <p>Today's Appts</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:var(--secondary-light);color:var(--secondary-color);"><i
+                            class="fa-solid fa-check"></i></div>
+                    <div class="stat-details">
+                        <h3 id="stat-completed">--</h3>
+                        <p>Completed</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:var(--warning-light);color:var(--warning-color);"><i
+                            class="fa-solid fa-hourglass-half"></i></div>
+                    <div class="stat-details">
+                        <h3 id="stat-pending">--</h3>
+                        <p>Pending</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============ SECTION: APPOINTMENTS ============ -->
+            <div class="section active" id="sec-appointments">
+                <div class="data-table-wrapper">
+                    <h2><i class="fa-solid fa-calendar-days"></i> My Appointments</h2>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Patient</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="appointments-table-body">
+                            <tr>
+                                <td colspan="4" class="text-center text-muted" style="padding:2rem;">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ============ SECTION: PATIENT HISTORY (Read-only) ============ -->
+            <div class="section" id="sec-patients">
+                <div class="data-table-wrapper">
+                    <h2><i class="fa-solid fa-hospital-user"></i> Patient Records (Read-only)</h2>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Age</th>
+                                <th>Gender</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="patients-table-body">
+                            <tr>
+                                <td colspan="4" class="text-center text-muted" style="padding:2rem;">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ============ SECTION: PRESCRIPTIONS ============ -->
+            <div class="section" id="sec-prescriptions">
+                <div class="data-table-wrapper">
+                    <h2><i class="fa-solid fa-file-prescription"></i> Prescriptions Written</h2>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Patient</th>
+                                <th>Medicines</th>
+                                <th>Notes</th>
+                                <th>PDF</th>
+                            </tr>
+                        </thead>
+                        <tbody id="prescriptions-table-body">
+                            <tr>
+                                <td colspan="5" class="text-center text-muted" style="padding:2rem;">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- ============ MODAL: Write Prescription (Multi-medicine) ============ -->
+    <div class="modal-backdrop hidden" id="rx-modal">
+        <div class="modal-box" style="max-width:550px;">
+            <button class="modal-close" id="rx-modal-close">&times;</button>
+            <h2><i class="fa-solid fa-prescription"></i> Write Prescription</h2>
+            <form id="rx-form">
+                <input type="hidden" id="rx-patient-id">
+                <input type="hidden" id="rx-appointment-id">
+                <div class="form-group"><label>Patient Name</label><input type="text" id="rx-patient-name"
+                        class="form-control" readonly></div>
+                <div class="form-group"><label>Diagnosis *</label><input type="text" id="rx-diagnosis"
+                        class="form-control" placeholder="e.g. Upper Respiratory Infection" required></div>
+                <div style="margin-bottom:1rem;">
+                    <div class="flex-between mb-1">
+                        <label style="font-size:0.85rem;font-weight:600;">Medicines</label>
+                        <button type="button" class="btn btn-primary btn-sm" id="add-medicine-row"
+                            style="width:auto;padding:0.3rem 0.8rem;font-size:0.8rem;"><i class="fa-solid fa-plus"></i>
+                            Add Medicine</button>
+                    </div>
+                    <div id="medicines-container"></div>
+                </div>
+                <div class="form-group"><label>Instructions / Notes</label><textarea id="rx-notes" class="form-control"
+                        rows="3" placeholder="Take after meals, rest for 3 days..."></textarea></div>
+                <button type="submit" class="btn btn-primary" id="rx-submit-btn"><i class="fa-solid fa-floppy-disk"></i>
+                    Save & Generate PDF</button>
+            </form>
+            <div id="rx-msg" class="mt-2" style="display:none;"></div>
+        </div>
+    </div>
+
+    <!-- ============ MODAL: View Patient Profile & Timeline (Read-only) ============ -->
+    <div class="modal-backdrop hidden" id="profile-modal">
+        <div class="modal-box" style="max-width:600px;">
+            <button class="modal-close" id="profile-modal-close">&times;</button>
+            <h2><i class="fa-solid fa-id-card-clip"></i> Patient Profile</h2>
+            <div class="profile-grid" id="profile-details" style="margin-bottom:1.5rem;">Loading...</div>
+            <h3 style="font-size:1rem; margin-bottom:1rem;"><i class="fa-solid fa-clock-rotate-left text-primary"></i>
+                Medical History Timeline</h3>
+            <div class="timeline" id="profile-timeline">
+                <p class="text-muted">Loading history...</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script type="module">
+        import { auth, db } from '../scripts/firebase-config.js';
+        import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
+        import { collection, getDocs, doc, getDoc, addDoc, updateDoc, query, where, Timestamp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+
+        const loading = document.getElementById('loading');
+        const sidebar = document.getElementById('sidebar');
+        let currentDoctorId = '', currentDoctorName = '';
+
+        document.getElementById('sidebar-toggle').addEventListener('click', () => sidebar.classList.toggle('open'));
+
+        // Section Navigation
+        document.getElementById('nav-links').addEventListener('click', (e) => {
+            const link = e.target.closest('a[data-section]');
+            if (!link) return;
+            e.preventDefault();
+            const sectionId = link.dataset.section;
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.getElementById(sectionId).classList.add('active');
+            document.querySelectorAll('#nav-links a').forEach(a => a.classList.remove('active'));
+            link.classList.add('active');
+            const titles = { 'sec-appointments': 'My Appointments', 'sec-patients': 'Patient History', 'sec-prescriptions': 'My Prescriptions' };
+            document.getElementById('page-title').textContent = titles[sectionId] || '';
+            sidebar.classList.remove('open');
+        });
+
+        // Auth Guard — Doctor only
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) { window.location.href = 'login.html'; return; }
+            const userDoc = await getDoc(doc(db, 'users', user.uid));
+            if (!userDoc.exists() || userDoc.data().role !== 'Doctor') { window.location.href = 'login.html'; return; }
+            currentDoctorId = user.uid;
+            currentDoctorName = userDoc.data().name;
+            document.getElementById('doctor-name').textContent = currentDoctorName;
+            await Promise.all([loadAppointments(), loadPatients(), loadPrescriptions()]);
+            loading.classList.add('hidden');
+        });
+
+        // ===================== APPOINTMENTS (own only) =====================
+        async function loadAppointments() {
+            try {
+                const q = query(collection(db, 'appointments'), where('doctorId', '==', currentDoctorId));
+                const snap = await getDocs(q);
+                const tbody = document.getElementById('appointments-table-body');
+                tbody.innerHTML = '';
+                let todayCount = 0, completedCount = 0, pendingCount = 0;
+                const today = new Date().toISOString().split('T')[0];
+
+                if (snap.empty) {
+                    tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted" style="padding:2rem;">No appointments assigned to you yet.</td></tr>';
+                } else {
+                    snap.forEach(d => {
+                        const a = d.data();
+                        if (a.date === today) todayCount++;
+                        if (a.status === 'completed') completedCount++;
+                        if (a.status === 'pending') pendingCount++;
+                        const badgeClass = a.status === 'completed' ? 'badge-completed' : a.status === 'confirmed' ? 'badge-confirmed' : a.status === 'cancelled' ? 'badge-cancelled' : 'badge-pending';
+                        const row = document.createElement('tr');
+                        const isActive = a.status !== 'completed' && a.status !== 'cancelled';
+                        row.innerHTML = `
+                            <td>${a.date || '--'}</td>
+                            <td>${a.patientName || '--'}</td>
+                            <td><span class="badge ${badgeClass}">${a.status}</span></td>
+                            <td style="display:flex;gap:0.4rem;flex-wrap:wrap;">
+                                ${isActive ? `<button class="btn btn-primary btn-sm prescribe-btn" data-pid="${a.patientId}" data-pname="${a.patientName}" data-aid="${d.id}"><i class="fa-solid fa-prescription"></i> Prescribe</button>
+                                <button class="btn btn-secondary btn-sm complete-btn" data-aid="${d.id}"><i class="fa-solid fa-check"></i> Complete</button>` : '<span class="text-muted" style="font-size:0.85rem;">Done</span>'}
+                            </td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+                }
+                document.getElementById('stat-today').textContent = todayCount;
+                document.getElementById('stat-completed').textContent = completedCount;
+                document.getElementById('stat-pending').textContent = pendingCount;
+
+                // Prescribe buttons
+                document.querySelectorAll('.prescribe-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        document.getElementById('rx-patient-id').value = btn.dataset.pid;
+                        document.getElementById('rx-patient-name').value = btn.dataset.pname;
+                        document.getElementById('rx-appointment-id').value = btn.dataset.aid;
+                        document.getElementById('medicines-container').innerHTML = '';
+                        addMedicineRow();
+                        document.getElementById('rx-diagnosis').value = '';
+                        document.getElementById('rx-notes').value = '';
+                        document.getElementById('rx-msg').style.display = 'none';
+                        document.getElementById('rx-modal').classList.remove('hidden');
+                    });
+                });
+
+                // Mark Complete buttons
+                document.querySelectorAll('.complete-btn').forEach(btn => {
+                    btn.addEventListener('click', async () => {
+                        btn.disabled = true;
+                        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+                        try {
+                            await updateDoc(doc(db, 'appointments', btn.dataset.aid), { status: 'completed' });
+                            await loadAppointments();
+                        } catch (err) { console.error(err); btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-check"></i> Complete'; }
+                    });
+                });
+            } catch (err) { console.error(err); }
+        }
+
+        // ===================== MULTI-MEDICINE PRESCRIPTION =====================
+        function addMedicineRow() {
+            const container = document.getElementById('medicines-container');
+            const row = document.createElement('div');
+            row.className = 'med-row';
+            row.style.cssText = 'display:flex;gap:0.5rem;align-items:center;margin-bottom:0.5rem;';
+            row.innerHTML = `
+                <input type="text" class="form-control med-name" placeholder="Medicine name" required style="flex:2;">
+                <input type="text" class="form-control med-dosage" placeholder="Dosage (e.g. 500mg 2x/day)" required style="flex:2;">
+                <button type="button" class="btn btn-danger btn-sm remove-med-row" style="width:auto;padding:0.4rem 0.6rem;flex-shrink:0;"><i class="fa-solid fa-xmark"></i></button>
+            `;
+            container.appendChild(row);
+            row.querySelector('.remove-med-row').addEventListener('click', () => {
+                if (container.querySelectorAll('.med-row').length > 1) row.remove();
+            });
+        }
+        document.getElementById('add-medicine-row').addEventListener('click', () => addMedicineRow());
+
+        // Rx modal
+        document.getElementById('rx-modal-close').addEventListener('click', () => document.getElementById('rx-modal').classList.add('hidden'));
+
+        document.getElementById('rx-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('rx-submit-btn');
+            const msg = document.getElementById('rx-msg');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+            msg.style.display = 'none';
+
+            const medRows = document.querySelectorAll('#medicines-container .med-row');
+            const medicines = [];
+            let valid = true;
+            medRows.forEach(row => {
+                const name = row.querySelector('.med-name').value.trim();
+                const dosage = row.querySelector('.med-dosage').value.trim();
+                if (!name || !dosage) valid = false;
+                medicines.push({ name, dosage });
+            });
+            if (!valid || medicines.length === 0) {
+                msg.innerHTML = '<span class="text-danger"><i class="fa-solid fa-exclamation-circle"></i> Please fill in all medicine fields.</span>';
+                msg.style.display = 'block';
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save & Generate PDF';
+                return;
+            }
+
+            const patientName = document.getElementById('rx-patient-name').value;
+            const diagnosis = document.getElementById('rx-diagnosis').value.trim();
+            const notes = document.getElementById('rx-notes').value;
+
+            try {
+                const rxData = {
+                    patientId: document.getElementById('rx-patient-id').value,
+                    patientName,
+                    doctorId: currentDoctorId,
+                    doctorName: currentDoctorName,
+                    diagnosis,
+                    medicines,
+                    instructions: notes,
+                    createdAt: Timestamp.now()
+                };
+                await addDoc(collection(db, 'prescriptions'), rxData);
+                const apptId = document.getElementById('rx-appointment-id').value;
+                if (apptId) await updateDoc(doc(db, 'appointments', apptId), { status: 'completed' });
+                generatePrescriptionPDF(rxData, patientName);
+                msg.innerHTML = '<span class="text-success"><i class="fa-solid fa-check-circle"></i> Saved & PDF generated!</span>';
+                msg.style.display = 'block';
+                setTimeout(() => { document.getElementById('rx-modal').classList.add('hidden'); msg.style.display = 'none'; }, 1500);
+                await Promise.all([loadAppointments(), loadPrescriptions()]);
+            } catch (err) {
+                console.error(err);
+                msg.innerHTML = '<span class="text-danger"><i class="fa-solid fa-exclamation-circle"></i> Failed.</span>';
+                msg.style.display = 'block';
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save & Generate PDF';
+            }
+        });
+
+        // ===================== PDF =====================
+        function generatePrescriptionPDF(rx, patientName) {
+            try {
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF();
+                const date = rx.createdAt?.toDate ? rx.createdAt.toDate().toLocaleDateString() : new Date().toLocaleDateString();
+                pdf.setFontSize(22); pdf.setTextColor(11, 92, 255);
+                pdf.text('AI Clinic Management', 105, 20, null, null, 'center');
+                pdf.setFontSize(14); pdf.setTextColor(100, 116, 139);
+                pdf.text('Medical Prescription', 105, 28, null, null, 'center');
+                pdf.setDrawColor(226, 232, 240); pdf.line(20, 33, 190, 33);
+                pdf.setFontSize(11); pdf.setTextColor(30, 41, 59);
+                pdf.text(`Doctor: ${rx.doctorName || '--'}`, 20, 44);
+                pdf.text(`Patient: ${patientName || '--'}`, 20, 52);
+                pdf.text(`Date: ${date}`, 150, 44);
+                if (rx.diagnosis) { pdf.text(`Diagnosis: ${rx.diagnosis}`, 20, 60); pdf.line(20, 65, 190, 65); }
+                else { pdf.line(20, 58, 190, 58); }
+                let startY = rx.diagnosis ? 75 : 70;
+                pdf.setFontSize(18); pdf.setTextColor(11, 92, 255); pdf.text('Rx', 20, startY);
+                pdf.setFontSize(10); pdf.setTextColor(100, 116, 139);
+                pdf.text('#', 22, startY + 10); pdf.text('MEDICINE', 32, startY + 10); pdf.text('DOSAGE', 110, startY + 10);
+                pdf.line(20, startY + 13, 190, startY + 13);
+                pdf.setFontSize(11); pdf.setTextColor(30, 41, 59);
+                let y = startY + 22;
+                rx.medicines.forEach((m, i) => { pdf.text(`${i + 1}.`, 22, y); pdf.text(m.name, 32, y); pdf.text(m.dosage, 110, y); y += 9; if (y > 260) { pdf.addPage(); y = 20; } });
+                if (rx.instructions) { y += 8; pdf.setFontSize(11); pdf.setTextColor(11, 92, 255); pdf.text('Instructions:', 20, y); y += 7; pdf.setTextColor(30, 41, 59); pdf.setFontSize(10); pdf.text(pdf.splitTextToSize(rx.instructions, 170), 20, y); }
+                pdf.setFontSize(9); pdf.setTextColor(150, 150, 150); pdf.text('Electronically generated prescription.', 105, 285, null, null, 'center');
+                pdf.save(`Rx_${(patientName || 'Patient').replace(/\s+/g, '_')}_${date.replace(/\//g, '-')}.pdf`);
+            } catch (err) { console.error(err); alert('PDF generation failed.'); }
+        }
+
+        // ===================== PATIENT HISTORY (Read-only — no add/edit) =====================
+        let allPatients = [];
+        async function loadPatients() {
+            try {
+                const snap = await getDocs(collection(db, 'patients'));
+                const tbody = document.getElementById('patients-table-body');
+                tbody.innerHTML = '';
+                allPatients = [];
+                if (snap.empty) {
+                    tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted" style="padding:2rem;">No patient records found.</td></tr>';
+                } else {
+                    snap.forEach(d => {
+                        const p = { id: d.id, ...d.data() };
+                        allPatients.push(p);
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${p.name}</td><td>${p.age}</td><td>${p.gender}</td>
+                            <td><button class="btn btn-primary btn-sm view-btn" data-id="${p.id}"><i class="fa-solid fa-eye"></i> View History</button></td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+                }
+                document.querySelectorAll('.view-btn').forEach(btn => btn.addEventListener('click', () => viewPatientProfile(btn.dataset.id)));
+            } catch (err) { console.error(err); }
+        }
+
+        // View Patient Profile + Timeline
+        async function viewPatientProfile(patientId) {
+            const modal = document.getElementById('profile-modal');
+            const detailsEl = document.getElementById('profile-details');
+            const timelineEl = document.getElementById('profile-timeline');
+            modal.classList.remove('hidden');
+            detailsEl.innerHTML = '<p class="text-muted">Loading...</p>';
+            timelineEl.innerHTML = '<p class="text-muted">Loading...</p>';
+            try {
+                const p = allPatients.find(x => x.id === patientId);
+                if (!p) { detailsEl.innerHTML = '<p class="text-danger">Not found.</p>'; return; }
+                detailsEl.innerHTML = `
+                    <div class="profile-field"><label>Full Name</label><p>${p.name}</p></div>
+                    <div class="profile-field"><label>Age</label><p>${p.age}</p></div>
+                    <div class="profile-field"><label>Gender</label><p>${p.gender}</p></div>
+                    <div class="profile-field"><label>Contact</label><p>${p.contact}</p></div>
+                `;
+                const [apptSnap, rxSnap] = await Promise.all([
+                    getDocs(query(collection(db, 'appointments'), where('patientId', '==', patientId))),
+                    getDocs(query(collection(db, 'prescriptions'), where('patientId', '==', patientId)))
+                ]);
+                const events = [];
+                apptSnap.forEach(d => { const a = d.data(); events.push({ date: a.date, icon: 'fa-calendar-check', title: `Appointment with ${a.doctorName || 'Doctor'}`, detail: `Status: ${a.status}` }); });
+                rxSnap.forEach(d => { const rx = d.data(); const date = rx.createdAt?.toDate ? rx.createdAt.toDate().toISOString().split('T')[0] : '--'; events.push({ date, icon: 'fa-prescription', title: `Prescription by ${rx.doctorName || 'Doctor'}`, detail: `${rx.diagnosis ? 'Dx: ' + rx.diagnosis + ' | ' : ''}Meds: ${rx.medicines?.map(m => m.name).join(', ') || '--'}` }); });
+                events.sort((a, b) => new Date(b.date) - new Date(a.date));
+                if (events.length === 0) { timelineEl.innerHTML = '<p class="text-muted">No history yet.</p>'; }
+                else { timelineEl.innerHTML = ''; events.forEach(ev => { const item = document.createElement('div'); item.className = 'timeline-item'; item.innerHTML = `<div class="timeline-date"><i class="fa-regular fa-clock"></i> ${ev.date}</div><div class="timeline-title"><i class="fa-solid ${ev.icon}"></i> ${ev.title}</div><div class="timeline-detail">${ev.detail}</div>`; timelineEl.appendChild(item); }); }
+            } catch (err) { console.error(err); detailsEl.innerHTML = '<p class="text-danger">Error loading profile.</p>'; }
+        }
+        document.getElementById('profile-modal-close').addEventListener('click', () => document.getElementById('profile-modal').classList.add('hidden'));
+
+        // ===================== PRESCRIPTIONS LIST =====================
+        async function loadPrescriptions() {
+            try {
+                const q = query(collection(db, 'prescriptions'), where('doctorId', '==', currentDoctorId));
+                const snap = await getDocs(q);
+                const tbody = document.getElementById('prescriptions-table-body');
+                tbody.innerHTML = '';
+                if (snap.empty) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted" style="padding:2rem;">No prescriptions yet.</td></tr>';
+                } else {
+                    snap.forEach(d => {
+                        const rx = d.data();
+                        const date = rx.createdAt?.toDate ? rx.createdAt.toDate().toLocaleDateString() : '--';
+                        const meds = rx.medicines?.map(m => `${m.name} (${m.dosage})`).join(', ') || '--';
+                        const row = document.createElement('tr');
+                        row.innerHTML = `<td>${date}</td><td>${rx.patientName || '--'}</td><td style="max-width:200px;">${meds}</td><td style="max-width:150px;">${rx.instructions || '--'}</td><td><button class="btn btn-primary btn-sm dl-pdf-btn"><i class="fa-solid fa-file-pdf"></i> PDF</button></td>`;
+                        tbody.appendChild(row);
+                        row.querySelector('.dl-pdf-btn').addEventListener('click', () => generatePrescriptionPDF(rx, rx.patientName || 'Patient'));
+                    });
+                }
+            } catch (err) { console.error(err); }
+        }
+
+        // Logout
+        document.getElementById('logout-btn').addEventListener('click', async () => { await signOut(auth); sessionStorage.clear(); window.location.href = 'login.html'; });
+    </script>
+</body>
+
+</html>
