@@ -6,7 +6,7 @@ const registerForm = document.getElementById('register-form');
 const nameInput = document.getElementById('name');
 const emailInput = document.getElementById('email');
 const passwordInput = document.getElementById('password');
-const roleInput = document.getElementById('role');
+
 const errorDiv = document.getElementById('auth-error');
 const registerBtn = document.getElementById('register-btn');
 
@@ -42,20 +42,13 @@ function validateForm() {
         passwordInput.classList.add('input-success');
     }
 
-    // Role validation
-    if (!roleInput.value) {
-        roleInput.classList.add('input-error');
-        isValid = false;
-    } else {
-        roleInput.classList.remove('input-error');
-        roleInput.classList.add('input-success');
-    }
+
 
     return isValid;
 }
 
 // Attach blur validation
-[nameInput, emailInput, passwordInput, roleInput].forEach(input => {
+[nameInput, emailInput, passwordInput].forEach(input => {
     if (input) {
         input.addEventListener('blur', () => validateForm());
         input.addEventListener('input', () => {
@@ -82,7 +75,7 @@ if (registerForm) {
         const name = nameInput.value.trim();
         const email = emailInput.value.trim();
         const password = passwordInput.value;
-        const role = roleInput.value;
+        const role = 'Patient';
 
         try {
             // 1. Create user in Firebase Auth
@@ -100,14 +93,8 @@ if (registerForm) {
                 createdAt: new Date().toISOString()
             });
 
-            // 3. Redirect based on role
-            switch (role) {
-                case 'Admin': window.location.href = 'admin-dashboard.html'; break;
-                case 'Doctor': window.location.href = 'doctor-dashboard.html'; break;
-                case 'Receptionist': window.location.href = 'receptionist-dashboard.html'; break;
-                case 'Patient': window.location.href = 'patient-dashboard.html'; break;
-                default: window.location.href = 'login.html';
-            }
+            // 3. Redirect to patient dashboard
+            window.location.href = 'patient-dashboard.html';
 
         } catch (error) {
             console.error("Registration failed:", error);

@@ -83,10 +83,13 @@
                 <h2><i class="fa-solid fa-staff-snake text-primary"></i> MyHealth</h2>
             </div>
             <ul class="sidebar-nav">
-                <li><a href="#" class="active"><i class="fa-solid fa-house-medical"></i> Overview</a></li>
-                <li><a href="#"><i class="fa-solid fa-notes-medical"></i> Medical History</a></li>
-                <li><a href="#"><i class="fa-solid fa-file-pdf"></i> Prescriptions</a></li>
-                <li><a href="#"><i class="fa-solid fa-calendar-check"></i> My Appointments</a></li>
+                <li><a href="#" class="active" data-section="overview"><i class="fa-solid fa-house-medical"></i>
+                        Overview</a></li>
+                <li><a href="#" data-section="history"><i class="fa-solid fa-notes-medical"></i> Medical History</a>
+                </li>
+                <li><a href="#" data-section="prescriptions"><i class="fa-solid fa-file-pdf"></i> Prescriptions</a></li>
+                <li><a href="#" data-section="appointments"><i class="fa-solid fa-calendar-check"></i> My
+                        Appointments</a></li>
             </ul>
             <div class="sidebar-footer">
                 <button class="btn btn-danger" id="logout-btn"><i class="fa-solid fa-arrow-right-from-bracket"></i>
@@ -104,43 +107,65 @@
                 </div>
             </header>
 
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-icon" style="background: var(--warning-light); color: var(--warning-color);"><i
-                            class="fa-solid fa-calendar-day"></i></div>
-                    <div class="stat-details">
-                        <h3 id="stat-appointments">--</h3>
-                        <p>My Appointments</p>
+            <!-- Overview Section -->
+            <div id="section-overview" class="dashboard-section">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: var(--warning-light); color: var(--warning-color);"><i
+                                class="fa-solid fa-calendar-day"></i></div>
+                        <div class="stat-details">
+                            <h3 id="stat-appointments">--</h3>
+                            <p>My Appointments</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"
+                            style="background: var(--secondary-light); color: var(--secondary-color);"><i
+                                class="fa-solid fa-prescription"></i></div>
+                        <div class="stat-details">
+                            <h3 id="stat-prescriptions">--</h3>
+                            <p>Prescriptions</p>
+                        </div>
                     </div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-icon" style="background: var(--secondary-light); color: var(--secondary-color);"><i
-                            class="fa-solid fa-prescription"></i></div>
-                    <div class="stat-details">
-                        <h3 id="stat-prescriptions">--</h3>
-                        <p>Prescriptions</p>
+
+                <!-- Recent Appointments on Overview -->
+                <div class="content-panel">
+                    <h2><i class="fa-solid fa-calendar-check"></i> Recent Appointments</h2>
+                    <div id="overview-appointments" style="color: var(--text-muted);">Loading...</div>
+                </div>
+
+                <!-- Recent Prescriptions on Overview -->
+                <div class="content-panel">
+                    <h2><i class="fa-solid fa-file-prescription"></i> Recent Prescriptions</h2>
+                    <div id="overview-prescriptions" style="color: var(--text-muted);">Loading...</div>
+                </div>
+            </div>
+
+            <!-- Appointments Section -->
+            <div id="section-appointments" class="dashboard-section" style="display: none;">
+                <div class="content-panel">
+                    <h2><i class="fa-solid fa-calendar-check"></i> My Appointments</h2>
+                    <div id="appointments-list" style="color: var(--text-muted);">Loading...</div>
+                </div>
+            </div>
+
+            <!-- Medical History Section -->
+            <div id="section-history" class="dashboard-section" style="display: none;">
+                <div class="content-panel">
+                    <h2><i class="fa-solid fa-clock-rotate-left"></i> Medical History Timeline</h2>
+                    <div class="timeline" id="timeline">
+                        <p class="text-muted">Loading history...</p>
                     </div>
                 </div>
             </div>
 
-            <!-- Appointments -->
-            <div class="content-panel">
-                <h2><i class="fa-solid fa-calendar-check"></i> My Appointments</h2>
-                <div id="appointments-list" style="color: var(--text-muted);">Loading...</div>
-            </div>
-
-            <!-- Medical History Timeline -->
-            <div class="content-panel">
-                <h2><i class="fa-solid fa-clock-rotate-left"></i> Medical History Timeline</h2>
-                <div class="timeline" id="timeline">
-                    <p class="text-muted">Loading history...</p>
+            <!-- Prescriptions Section -->
+            <div id="section-prescriptions" class="dashboard-section" style="display: none;">
+                <div class="content-panel">
+                    <h2><i class="fa-solid fa-file-prescription"></i> My Prescriptions</h2>
+                    <div id="prescriptions-list" style="color: var(--text-muted);">Loading...</div>
                 </div>
-            </div>
-
-            <!-- Prescriptions -->
-            <div class="content-panel">
-                <h2><i class="fa-solid fa-file-prescription"></i> My Prescriptions</h2>
-                <div id="prescriptions-list" style="color: var(--text-muted);">Loading...</div>
             </div>
         </main>
     </div>
@@ -159,6 +184,28 @@
 
         sidebarToggle.addEventListener('click', () => sidebar.classList.toggle('open'));
 
+        // Section navigation
+        const navLinks = document.querySelectorAll('.sidebar-nav a[data-section]');
+        const sections = document.querySelectorAll('.dashboard-section');
+
+        navLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const target = link.getAttribute('data-section');
+
+                // Update active link
+                navLinks.forEach(l => l.classList.remove('active'));
+                link.classList.add('active');
+
+                // Show/hide sections
+                sections.forEach(s => s.style.display = 'none');
+                document.getElementById('section-' + target).style.display = 'block';
+
+                // Close sidebar on mobile
+                sidebar.classList.remove('open');
+            });
+        });
+
         // Auth guard
         onAuthStateChanged(auth, async (user) => {
             if (!user) { window.location.href = 'login.html'; return; }
@@ -168,30 +215,25 @@
             }
             patientUID = user.uid;
             patientData = userDoc.data();
-            document.getElementById('patient-name').textContent = patientData.name;
+            document.getElementById('patient-name').textContent = patientData.name || patientData.userName || 'Patient';
 
-            // Find this patient's ID in the patients collection
+            // Collect all possible IDs this patient might be known by
+            const patientIds = new Set();
+            patientIds.add(user.uid); // Self-registered patients use their auth UID
+
+            // Check if patient exists in the patients collection
             const pSnap = await getDocs(collection(db, 'patients'));
-            let patientDocId = null;
             pSnap.forEach(d => {
-                // Match by name or email (since patients may be registered by receptionist)
-                if (d.data().name === patientData.name) {
-                    patientDocId = d.id;
+                const pData = d.data();
+                if (pData.name === patientData.name || pData.email === patientData.email) {
+                    patientIds.add(d.id);
                 }
             });
 
-            if (patientDocId) {
-                await loadAppointments(patientDocId);
-                await loadPrescriptions(patientDocId);
-                buildTimeline(patientDocId);
-            } else {
-                // Patient might not have a record in 'patients' collection yet
-                document.getElementById('appointments-list').innerHTML = '<p class="text-muted">No appointments found. Your receptionist will register you.</p>';
-                document.getElementById('prescriptions-list').innerHTML = '<p class="text-muted">No prescriptions yet.</p>';
-                document.getElementById('timeline').innerHTML = '<p class="text-muted">No history yet.</p>';
-                document.getElementById('stat-appointments').textContent = '0';
-                document.getElementById('stat-prescriptions').textContent = '0';
-            }
+            // Load records using all possible patient IDs
+            await loadAppointments([...patientIds]);
+            await loadPrescriptions([...patientIds]);
+            buildTimeline();
 
             loading.classList.add('hidden');
         });
@@ -199,8 +241,8 @@
         let allAppointments = [];
         let allPrescriptions = [];
 
-        async function loadAppointments(patientId) {
-            const q = query(collection(db, 'appointments'), where('patientId', '==', patientId));
+        async function loadAppointments(patientIds) {
+            const q = query(collection(db, 'appointments'), where('patientId', 'in', patientIds));
             const snap = await getDocs(q);
             const container = document.getElementById('appointments-list');
             container.innerHTML = '';
@@ -227,11 +269,35 @@
                 `;
                 container.appendChild(div);
             });
-            document.getElementById('stat-appointments').textContent = snap.size;
+            document.getElementById('stat-appointments').textContent = allAppointments.length;
+
+            // Also populate overview section with latest 3
+            const overviewContainer = document.getElementById('overview-appointments');
+            if (overviewContainer) {
+                overviewContainer.innerHTML = '';
+                const recent = allAppointments.slice(0, 3);
+                if (recent.length === 0) {
+                    overviewContainer.innerHTML = '<p class="text-muted">No appointments found.</p>';
+                } else {
+                    recent.forEach(a => {
+                        const badgeClass = a.status === 'completed' ? 'badge-completed' : a.status === 'confirmed' ? 'badge-confirmed' : a.status === 'cancelled' ? 'badge-cancelled' : 'badge-pending';
+                        const div = document.createElement('div');
+                        div.style.cssText = 'display:flex; justify-content:space-between; align-items:center; padding:0.8rem; background:var(--bg-color); border-radius:0.5rem; margin-bottom:0.5rem; border: 1px solid var(--border-color);';
+                        div.innerHTML = `
+                            <div>
+                                <strong><i class="fa-solid fa-user-doctor"></i> ${a.doctorName || 'Doctor'}</strong>
+                                <p style="font-size:0.85rem; color:var(--text-muted);"><i class="fa-regular fa-calendar"></i> ${a.date}</p>
+                            </div>
+                            <span class="badge ${badgeClass}">${a.status}</span>
+                        `;
+                        overviewContainer.appendChild(div);
+                    });
+                }
+            }
         }
 
-        async function loadPrescriptions(patientId) {
-            const q = query(collection(db, 'prescriptions'), where('patientId', '==', patientId));
+        async function loadPrescriptions(patientIds) {
+            const q = query(collection(db, 'prescriptions'), where('patientId', 'in', patientIds));
             const snap = await getDocs(q);
             const container = document.getElementById('prescriptions-list');
             container.innerHTML = '';
@@ -265,10 +331,34 @@
 
                 div.querySelector('.download-pdf-btn').addEventListener('click', () => generatePDF(rx));
             });
-            document.getElementById('stat-prescriptions').textContent = snap.size;
+            document.getElementById('stat-prescriptions').textContent = allPrescriptions.length;
+
+            // Also populate overview section with latest 3
+            const overviewContainer = document.getElementById('overview-prescriptions');
+            if (overviewContainer) {
+                overviewContainer.innerHTML = '';
+                const recent = allPrescriptions.slice(0, 3);
+                if (recent.length === 0) {
+                    overviewContainer.innerHTML = '<p class="text-muted">No prescriptions yet.</p>';
+                } else {
+                    recent.forEach(rx => {
+                        const date = rx.createdAt?.toDate ? rx.createdAt.toDate().toLocaleDateString() : '--';
+                        const div = document.createElement('div');
+                        div.style.cssText = 'display:flex; justify-content:space-between; align-items:center; padding:0.8rem; background:var(--bg-color); border-radius:0.5rem; margin-bottom:0.5rem; border: 1px solid var(--border-color);';
+                        div.innerHTML = `
+                            <div>
+                                <strong><i class="fa-solid fa-user-doctor"></i> ${rx.doctorName || 'Doctor'}</strong>
+                                <p style="font-size:0.85rem; color:var(--text-muted);"><i class="fa-regular fa-calendar"></i> ${date}</p>
+                            </div>
+                            <span class="badge badge-completed">Prescribed</span>
+                        `;
+                        overviewContainer.appendChild(div);
+                    });
+                }
+            }
         }
 
-        function buildTimeline(patientId) {
+        function buildTimeline() {
             const timeline = document.getElementById('timeline');
             timeline.innerHTML = '';
 

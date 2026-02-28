@@ -66,10 +66,15 @@ const signupHandler = (userName, email, password) => {
     .then((userCredential) => {
       const user = userCredential.user;
       addData("users", user.uid, {
-        userName: userName,
+        id: user.uid,
+        name: userName,
         email: email,
-        pass: password
+        password: '***secured***',
+        role: 'Patient',
+        subscriptionPlan: 'Free',
+        createdAt: new Date().toISOString()
       });
+      window.location.href = '/pages/patient-dashboard.html';
     })
     .catch((error) => {
       Swal.fire({

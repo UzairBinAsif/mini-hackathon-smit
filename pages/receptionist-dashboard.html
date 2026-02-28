@@ -281,24 +281,56 @@
             select.innerHTML = '<option value="" disabled selected>Select patient...</option>';
             allPatients = [];
 
-            if (snap.empty) {
+            // Track names/emails from patients collection to avoid duplicates
+            const knownNames = new Set();
+            const knownEmails = new Set();
+
+            snap.forEach(d => {
+                const p = { id: d.id, source: 'patients', ...d.data() };
+                allPatients.push(p);
+                if (p.name) knownNames.add(p.name.toLowerCase());
+                if (p.email) knownEmails.add(p.email.toLowerCase());
+            });
+
+            // Also fetch self-registered patients from users collection
+            const usersSnap = await getDocs(collection(db, 'users'));
+            usersSnap.forEach(d => {
+                const u = d.data();
+                if (u.role === 'Patient') {
+                    const nameLC = (u.name || '').toLowerCase();
+                    const emailLC = (u.email || '').toLowerCase();
+                    // Skip if already in patients collection (matched by name or email)
+                    if (knownNames.has(nameLC) || knownEmails.has(emailLC)) return;
+                    allPatients.push({
+                        id: d.id,
+                        source: 'users',
+                        name: u.name || u.userName || 'Unknown',
+                        age: u.age || '--',
+                        gender: u.gender || '--',
+                        contact: u.contact || u.phone || '--',
+                        email: u.email || '--'
+                    });
+                }
+            });
+
+            if (allPatients.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted" style="padding:2rem;">No patients registered yet.</td></tr>';
             } else {
-                snap.forEach(d => {
-                    const p = { id: d.id, ...d.data() };
-                    allPatients.push(p);
+                allPatients.forEach(p => {
                     const row = document.createElement('tr');
+                    const isFromUsers = p.source === 'users';
                     row.innerHTML = `
-                        <td>${p.name}</td><td>${p.age}</td><td>${p.gender}</td><td>${p.contact}</td>
-                        <td><button class="btn btn-secondary btn-sm edit-btn" data-id="${p.id}"><i class="fa-solid fa-pen"></i> Edit</button></td>
+                        <td>${p.name} ${isFromUsers ? '<span class="badge badge-pending" style="font-size:0.7rem;">Self-registered</span>' : ''}</td>
+                        <td>${p.age}</td><td>${p.gender}</td><td>${p.contact}</td>
+                        <td>${isFromUsers ? '<span class="text-muted" style="font-size:0.85rem;">—</span>' : `<button class="btn btn-secondary btn-sm edit-btn" data-id="${p.id}"><i class="fa-solid fa-pen"></i> Edit</button>`}</td>
                     `;
                     tbody.appendChild(row);
                     const opt = document.createElement('option');
-                    opt.value = d.id; opt.textContent = p.name; opt.dataset.name = p.name;
+                    opt.value = p.id; opt.textContent = p.name; opt.dataset.name = p.name;
                     select.appendChild(opt);
                 });
             }
-            document.getElementById('stat-patients').textContent = snap.size;
+            document.getElementById('stat-patients').textContent = allPatients.length;
 
             // Edit handlers
             document.querySelectorAll('.edit-btn').forEach(btn => btn.addEventListener('click', () => openEditPatient(btn.dataset.id)));
