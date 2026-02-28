@@ -1,5 +1,5 @@
 import { uploadImage } from "./cloudinary.js";
-import { getCurrentState, getData, updateData, deleteData } from "./firebase.js";
+import { getCurrentState, getData, updateData, deleteData } from "./firebase-config.js";
 getCurrentState()
 
 let getDataBtn = document.querySelector("#get-data-btn")
@@ -20,7 +20,7 @@ const form = document.getElementById("userForm");
 
 window.addEventListener("click", () => {
     if (event.target.id === "update-btn") {
-        let card =  event.target.closest(".card")
+        let card = event.target.closest(".card")
         let userName = card.querySelector(".username").innerText
         let email = card.querySelector(".email").innerText.slice(7)
         let password = card.querySelector(".password").innerText.slice(10)
@@ -28,7 +28,7 @@ window.addEventListener("click", () => {
         document.getElementById("username").value = userName
         document.getElementById("email").value = email
         document.getElementById("password").value = password
-        
+
         updateUserId = card.dataset.id
         modal.style.display = "flex";
     }
@@ -58,7 +58,7 @@ form.addEventListener("submit", async (e) => {
         const formData = new FormData();
         formData.append('file', file);
         formData.append('upload_preset', 'uploadImg');
-        
+
         secure_url = await uploadImage(formData)
     }
 

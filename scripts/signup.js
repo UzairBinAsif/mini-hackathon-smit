@@ -1,4 +1,4 @@
-import { signup } from "./firebase.js";
+import { signup } from "./firebase-config.js";
 import { validateEmail, validatePassword } from "./utilities.js";
 
 let signupBtn = document.querySelector(".sign")
